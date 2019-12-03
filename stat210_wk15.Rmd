@@ -1,0 +1,213 @@
+---
+title: "Ch. 20"
+output: html_notebook
+---
+#Vectors
+```{r}
+library(tidyverse) # includes purrr package
+```
+Two types of vectors:
+* Atomic vectors, of which there are six types: logical, integer, double, character, complex, and raw. Integer and double vectors are collectively known as numeric vectors.
+* Lists, which are sometimes called recursive vectors because lists can contain other lists
+
+```{r}
+typeof(letters) # [1] "character"
+typeof(1:10) # [1] "integer"
+
+x <- list("a", "b", 1:10)
+length(x)
+#> [1] 3
+
+1:10 %% 3 == 0 #  [1] FALSE FALSE  TRUE FALSE FALSE  TRUE FALSE FALSE  TRUE FALSE
+
+c(TRUE, TRUE, FALSE, NA) # [1]  TRUE  TRUE FALSE    NA
+```
+ In R, numbers are doubles by default. To make an integer, place an L after the number.
+ Integers have one special value: NA, while doubles have four: NA, NaN, Inf and -Inf. All three special values NaN, Inf and -Inf can arise during division
+ 
+            	0	Inf	NA	NaN
+is.finite()	  x			
+is.infinite()		x		
+is.na()			        x	  x
+is.nan()			        	x
+
+R uses a global string pool 
+```{r}
+x <- "This is a reasonably long string."
+pryr::object_size(x) # 152 B
+```
+
+Describe the difference between is.finite(x) and !is.infinite(x). is.finite(x) is asking if the value is finite while the !is.infinite indicates "not infinite". These two different questions yield the same answer for a goven value.
+
+```{r}
+x <- 10
+is.finite(x) # [1] TRUE
+!is.infinite(x) # [1] TRUE
+```
+
+
+Read the source code for dplyr::near() (Hint: to see the source code, drop the ()). How does it work? It shows a small expression that captures the arguments. The arguments expand if you copy and try to paste them.
+```{r}
+dplyr::near 
+# Show in New WindowClear OutputExpand/Collapse Output
+Registered S3 method overwritten by 'dplyr':
+  method           from
+  print.rowwise_df     
+Registered S3 methods overwritten by 'ggplot2':
+  method         from 
+  [.quosures     rlang
+  c.quosures     rlang
+  print.quosures rlang
+── Attaching packages ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 3.0.0     ✔ purrr   0.2.5
+✔ tibble  2.1.3     ✔ dplyr   0.8.3
+✔ tidyr   1.0.0     ✔ stringr 1.3.1
+✔ readr   1.1.1     ✔ forcats 0.3.0
+── Conflicts ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+Show in New WindowClear OutputExpand/Collapse Output
+[1] "character"
+Show in New WindowClear OutputExpand/Collapse Output
+[1] TRUE
+Show in New WindowClear OutputExpand/Collapse Output
+function (x, y, tol = .Machine$double.eps^0.5) 
+{
+    abs(x - y) < tol
+}
+<bytecode: 0x9a35a98>
+<environment: namespace:dplyr>
+```
+
+
+A logical vector can take 3 possible values. How many possible values can an integer vector take? How many possible values can a double take? Use google to do some research.
+https://github.com/siskavera/r4ds_exercises/blob/master/vectors.R --> Integers have one special value: NA, while doubles have four: NA, NaN, Inf and -Inf
+
+Brainstorm at least four functions that allow you to convert a double to an integer. How do they differ? Be precise.
+floor
+ceil
+round 0.5 up
+round 0.5 down
+
+What functions from the readr package allow you to turn a string into logical, integer, and double vector?
+
+# Coercion
+Explicit coercion happens when you call a function like as.logical(), as.integer(), as.double(), or as.character().
+Implicit coercion happens when you use a vector in a specific context that expects a certain type of vector
+
+```{r}
+if (length(x)) {
+  # do something
+} # implicit coercion from integer to logical
+```
+most built-in functions are vectorised, meaning that they will operate on a vector of numbers ex. sample()
+```{r}
+x <- c("one", "two", "three", "four", "five")
+x[c(3, 2, 5)] # [1] "three" "two"   "five"
+# Subsetting with positive integers keeps the elements at those positions
+```
+The simplest type of subsetting is nothing, x[], which returns the complete x. This is not useful for subsetting vectors, but it is useful when subsetting matrices (and other high dimensional structures) because it lets you select all the rows or all the columns, by leaving that index blank
+
+What does mean(is.na(x)) tell you about a vector x? What about sum(!is.finite(x))?
+is.na(x) tells me the proportion of missing data while !is.finite(x) shows the number of not finite elements
+
+Carefully read the documentation of is.vector(). What does it actually test for? Why does is.atomic() not agree with the definition of atomic vectors above?
+is.vector returns true for lists by default. Can have modes, which are more like atomic?
+NULL is is.atomic, but not is_atomic
+
+Compare and contrast setNames() with purrr::set_names().
+Stricter argument testing and if the second argument is ommitted a vector is named with itself
+
+Create functions that take a vector as input and returns:
+
+Why is x[-which(x > 0)] not the same as x[x <= 0]?
+
+```{r}
+x <- c(1, 2, 3, 5, 2, Inf, NA, -5, -10, -Inf)
+                                        
+last_val <- function(x) { # The last value. Should you use [ or [[?
+  x[[length(x)]]
+}
+last_val(x)
+
+even_elements <- function(x) { # The elements at even numbered positions.
+  x[seq(2, length(x), 2)]
+}
+even_elements(x)
+
+all_but_last <- function(x) { # Every element except the last value.
+  x[1:(length(x)-1)]
+}
+all_but_last(x)
+
+only_evens <- function(x) { # Only even numbers (and no missing values).
+  x_is_finite <- is.finite(x)
+  x_is_even <- x %% 2 == 0
+  x[x_is_finite & x_is_even]
+}
+only_evens(x)
+
+```
+
+
+What happens when you subset with a positive integer that’s bigger than the length of the vector? What happens when you subset with a name that doesn’t exist?
+Bigger than length: NA & Non-existing name: NA
+# Lists
+```{r}
+x1 <- list(c(1, 2), c(3, 4))
+x2 <- list(list(1, 2), list(3, 4))
+x3 <- list(1, list(2, list(3)))
+```
+
+The distinction between [ and [[ is really important for lists, because [[ drills down into the list while [ returns a new, smaller list
+
+# Vectors
+Atomic vectors and lists are the building blocks for other important vector types like factors and dates. I call these augmented vectors, because they are vectors with additional attributes, including class. Because augmented vectors have a class, they behave differently to the atomic vector on which they are built. In this book, we make use of four important augmented vectors:
+* Factors
+* Dates
+* Date-times
+* Tibbles
+
+What does hms::hms(3600) return? How does it print? What primitive type is the augmented vector built on top of? What attributes does it use?
+```{r}
+hms::hms(3600) # returns 01:00:00 and prints 
+"Show in New WindowClear OutputExpand/Collapse Output
+Registered S3 method overwritten by 'dplyr':
+  method           from
+  print.rowwise_df     
+Registered S3 methods overwritten by 'ggplot2':
+  method         from 
+  [.quosures     rlang
+  c.quosures     rlang
+  print.quosures rlang
+── Attaching packages ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
+✔ ggplot2 3.0.0     ✔ purrr   0.2.5
+✔ tibble  2.1.3     ✔ dplyr   0.8.3
+✔ tidyr   1.0.0     ✔ stringr 1.3.1
+✔ readr   1.1.1     ✔ forcats 0.3.0
+── Conflicts ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+Show in New WindowClear OutputExpand/Collapse Output
+[1] "character"
+Show in New WindowClear OutputExpand/Collapse Output
+[1] TRUE
+Show in New WindowClear OutputExpand/Collapse Output
+function (x, y, tol = .Machine$double.eps^0.5) 
+{
+    abs(x - y) < tol
+}
+<bytecode: 0x9a35a98>
+<environment: namespace:dplyr>
+Show in New WindowClear OutputExpand/Collapse Output
+01:00:00"
+# Uses packages and returns answer as a character()
+```
+
+Try and make a tibble that has columns with different lengths. What happens?
+An error. The length of all columns must be the same or 1 (scalar)
+```{r}
+tibble(a = 1:2, b = 1:3) # Error: Tibble columns must have consistent lengths, only values of length one are recycled
+```
+Based on the definition above, is it ok to have a list as a column of a tibble?
+Yes, as long as it has the same length as other columns and all slots have the same class.
